@@ -16,7 +16,7 @@ headers = {"Accept":"application/xml,application/xhtml+xml,text/html;q=0.9,text/
            }
 
 def main(url):
-    if not url.startswith('http://'):
+    if not url.startswith('http'):
         url = "http://"+url
     url = urlparse.urlparse(url)
     conn = httplib.HTTPConnection(url.netloc,80)
@@ -28,4 +28,7 @@ def main(url):
         main(x)
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print 'url <tiny-url>'
+        exit(-1)
     main(sys.argv[1])
