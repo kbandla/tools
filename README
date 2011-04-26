@@ -4,3 +4,5 @@ Most of the them work, but ymmv.
 report.py 	= 	ThreatExpert/Virustotal script. btw ,VirusTotal now has an api.
 zip.py 		=	Automate zipping (malware) files
 url.py		=	Tiny URL expander
+myip.py		=	Show external IP address
+fileserv.py	=	A simple HTTP server for sharing files over browser
