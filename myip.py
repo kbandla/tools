@@ -5,7 +5,7 @@ Get external IP Address
 '''
 import urllib
 def getip():
-        url = "http://www.whatismyip.com/automation/n09230945.asp"
+        url = "http://automation.whatismyip.com/n09230945.asp"
         u = urllib.urlopen(url)
         ip = u.read()
         u.close()
