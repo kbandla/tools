@@ -6,3 +6,4 @@ zip.py 		=	Automate zipping (malware) files
 url.py		=	Tiny URL expander
 myip.py		=	Show external IP address
 fileserv.py	=	A simple HTTP server for sharing files over browser
+vmware_mount.py = Mount/Unmount ISOs on VMware ESX/ESXi using pysphere
