@@ -1,0 +1,53 @@
+#!/usr/bin/python
+'''
+Created on Aug 28, 2010
+A reddit client
+
+@author: kbandla
+'''
+import sys
+import json
+import urllib
+try:
+    from termcolor import colored
+    color = True
+except Exception,e:
+    color = False
+
+URL = 'http://www.reddit.com/r/%s/.json'
+CLICK_URL = 'http://www.reddit.com/r/%s'
+subreddits = ['programming', 'reverseengineering', 'netsec']
+
+if len(sys.argv)> 1:
+    # command-line options superscede defaults
+    # ex: reddit linux
+    subreddits = sys.argv[1:]
+
+# clear console
+print chr(27) + "[2J"
+
+for subreddit in subreddits:
+    url = URL%( subreddit )
+    data = urllib.urlopen(url).read()
+    if data:
+        data = json.loads( data )
+    else:
+        print 'Could not download %s'%v
+        continue
+    if color:
+        print colored(subreddit.upper(), 'red'), CLICK_URL%subreddit
+    else:
+        print subreddit.upper(), CLICK_URL%subreddit
+    if data.has_key('data'):
+        if data['data'].has_key('children'):
+            for x in data['data']['children']:
+                title = x['data']['title']
+                comments = x['data']['permalink']
+                link = x['data']['url']
+                if color:
+                    print colored(title, 'white'), colored(link, 'green')
+                else:
+                    print title, link
+            print
+    else:
+        print 'Data error', data
