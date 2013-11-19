@@ -7,7 +7,10 @@ A reddit client
 '''
 import sys
 import json
-import urllib
+import time
+import httplib
+import argparse
+
 try:
     from termcolor import colored
     color = True
@@ -16,38 +19,68 @@ except Exception,e:
 
 URL = 'http://www.reddit.com/r/%s/.json'
 CLICK_URL = 'http://www.reddit.com/r/%s'
-subreddits = ['programming', 'reverseengineering', 'netsec']
+SUBREDDITS = ['programming', 'linux','reverseengineering', 'netsec', 'malware']
+TIME_DIFF = 86400
 
-if len(sys.argv)> 1:
-    # command-line options superscede defaults
-    # ex: reddit linux
-    subreddits = sys.argv[1:]
-
-# clear console
-print chr(27) + "[2J"
-
-for subreddit in subreddits:
-    url = URL%( subreddit )
-    data = urllib.urlopen(url).read()
-    if data:
+def getJSON(subreddit):
+    conn = httplib.HTTPConnection('www.reddit.com' , timeout=2)
+    headers = ({'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22',
+                'Accept-Language':'en-US,en;q=0.8',
+                'Accept-Charset':'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+                                })
+    conn.request('GET', '/r/%s/.json'%(subreddit), headers=headers)
+    try:
+        response = conn.getresponse()
+    except Exception,e:
+        print 'Error : %s'%e
+        return False
+    if response.status == 200:
+        data = response.read()
         data = json.loads( data )
-    else:
-        print 'Could not download %s'%v
-        continue
-    if color:
-        print colored(subreddit.upper(), 'red'), CLICK_URL%subreddit
-    else:
-        print subreddit.upper(), CLICK_URL%subreddit
-    if data.has_key('data'):
-        if data['data'].has_key('children'):
-            for x in data['data']['children']:
-                title = x['data']['title']
-                comments = x['data']['permalink']
-                link = x['data']['url']
-                if color:
-                    print colored(title, 'white'), colored(link, 'green')
-                else:
-                    print title, link
-            print
-    else:
-        print 'Data error', data
+        conn.close()
+        return data
+    print 'Error getting JSON. HTTP %s '%(response.status)
+    return False
+
+def reddit(subreddits, days=1, verbose=False):
+    # clear console
+    print chr(27) + "[2J"
+
+    for subreddit in subreddits:
+        url = URL%( subreddit )
+        data = getJSON( subreddit )
+        if not data:
+            continue
+
+        if color:
+            print colored(subreddit, 'red'), CLICK_URL%subreddit
+        else:
+            print subreddit, CLICK_URL%subreddit
+
+        if data.has_key('data'):
+            if data['data'].has_key('children'):
+                for post in data['data']['children']:
+                    if time.time() - float(post['data']['created']) < TIME_DIFF*days:
+                        title = post['data']['title']
+                        comments = post['data']['permalink']
+                        link = post['data']['url']
+                        if color:
+                            print colored(title, 'white'), colored(link, 'green')
+                        else:
+                            print title, link
+                print
+        else:
+            print 'Data error', data
+
+def main():
+    parser = argparse.ArgumentParser(description='REDDIT')
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Verbose mode')
+    parser.add_argument('-d', '--days', dest='days', action='store', default=1, help='Number of days')
+    parser.add_argument('subreddits', nargs='*', default=SUBREDDITS)
+    args = parser.parse_args()
+    if args.verbose:
+        print 'Found %s subreddits to get'%(len(args.subreddits))
+
+    reddit( args.subreddits, args.days, args.verbose )
+if __name__ == "__main__":
+    main()

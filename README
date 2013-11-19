@@ -1,9 +1,8 @@
 Various tools and snippets that are too small/short to be projects. 
 Most of the them work, but ymmv.
 
-report.py 	= 	ThreatExpert/Virustotal script. btw ,VirusTotal now has an api.
-zip.py 		=	Automate zipping (malware) files
-url.py		=	Tiny URL expander
-myip.py		=	Show external IP address
-fileserv.py	=	A simple HTTP server for sharing files over browser
-vmware_mount.py = Mount/Unmount ISOs on VMware ESX/ESXi using pysphere
+* zip.py Automate zipping (malware) files
+* url.py Tiny URL expander
+* vmware_mount.py Mount/Unmount ISOs on VMware ESX/ESXi using pysphere
+* reddit reddit cli
+* xxxswf.py 
