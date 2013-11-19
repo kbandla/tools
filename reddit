@@ -19,7 +19,7 @@ except Exception,e:
 
 URL = 'http://www.reddit.com/r/%s/.json'
 CLICK_URL = 'http://www.reddit.com/r/%s'
-SUBREDDITS = ['programming', 'linux','reverseengineering', 'netsec', 'malware']
+SUBREDDITS = ['programming', 'linux']
 TIME_DIFF = 86400
 
 def getJSON(subreddit):
