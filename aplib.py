@@ -3,7 +3,7 @@ ctypes wrapper for aPlib
 Kiran Bandla <kbandla@in2void.com>
 
 ctypes wrapper to decompress aplib-compressed files
-Tested against aPLib v1.01
+Tested against aPLib v1.01 [http://ibsensoftware.com/download.html]
 '''
 
 from ctypes import *
