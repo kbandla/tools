@@ -19,7 +19,7 @@ except Exception,e:
 
 URL = 'http://www.reddit.com/r/%s/.json'
 CLICK_URL = 'http://www.reddit.com/r/%s'
-SUBREDDITS = ['programming', 'linux']
+SUBREDDITS = ['programming', 'linux','reverseengineering', 'netsec', 'malware']
 TIME_DIFF = 86400
 
 def getJSON(subreddit):
@@ -32,14 +32,15 @@ def getJSON(subreddit):
     try:
         response = conn.getresponse()
     except Exception,e:
-        print 'Error : %s'%e
+        print '[%s] Error : %s'%(subreddit, e)
+        conn.close()
         return False
     if response.status == 200:
         data = response.read()
         data = json.loads( data )
         conn.close()
         return data
-    print 'Error getting JSON. HTTP %s '%(response.status)
+    print '[%s] Error getting JSON. HTTP %s '%(subreddit, response.status)
     return False
 
 def reddit(subreddits, days=1, verbose=False):
