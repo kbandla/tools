@@ -877,6 +877,10 @@ magic = [
   [0L, 'long', '=', 59401L, 'separate object file (z8000 a.out)'],
   [0L, 'long', '=', 59397L, 'overlay object file (z8000 a.out)'],
   [0L, 'string', '=', 'ZyXEL\002', 'ZyXEL voice data'],
+  # @kbandla's additions follow
+  [0L, 'string', '=', 'CWS', 'application/x-shockwave-flash'],
+  [0L, 'string', '=', 'FWS', 'application/x-shockwave-flash'],
+  [0L, 'string', '=', 'ZWS', 'application/x-shockwave-flash'],
 ]
 
 magicNumbers = []
