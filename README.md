@@ -11,4 +11,4 @@ Most of the them work, but ymmv.
 * aplib.py - ctypes wrapper for aPlib
 
 ## LICENSE
-Each code/script has the license specified in it
+Each script has the license specified in it
