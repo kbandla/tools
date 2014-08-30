@@ -1,0 +1,177 @@
+#!/usr/bin/python
+# A very minimal URL redir analyzer
+# Kiran Bandla <kbandla@in2void.com>
+
+import os
+import re
+import sys
+import httplib, urllib
+from urlparse import urlparse
+import argparse
+import socket
+socket.setdefaulttimeout(2)
+
+import logging
+
+def getLogger(name, verbose=False, level=logging.DEBUG):
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter('%(levelname)s %(funcName)s| %(message)s'))
+    logger.addHandler(handler)
+
+    return logger
+
+class URLAnalyzer:
+    '''
+    Analyze URLs to check for:
+        +   images
+        +   final landing page
+    '''
+
+    def __init__(self, url, logger=None, verbose=False):
+        self.verbose = verbose
+        if logger:
+            self.logger = logger
+        else:
+            if verbose:
+                self.logger = getLogger('url_analyzer')
+            else:
+                self.logger = getLogger('url_analyzer', level=logging.INFO)
+
+        self.url = url
+        self.final = url
+        self.depth = 0
+
+        self.logger.debug('\033[91m%s\033[0m'%self.url)
+        self.__scrubURL()
+        try:
+            self.__getFinalPage()
+        except Exception,e:
+            self.logger.error(e)
+
+        # add individual handlers here ( packetstorm, etc )
+        # "This is an article straight from the wires, you can read the full story here"
+        # see http://packetstormsecurity.com/news/22285 for an example
+        self.logger.debug('depth = %d'%(self.depth))
+
+    def __getInverseMarker(self, symbol):
+        '''
+        returns:
+            < for >
+            [ for ] etc
+        '''
+        if symbol in ['"', "'", '"""', "'''"]:  #identical inverse
+            return symbol
+
+        symbol_dict = {
+                    '<':'>',
+                    '[':']',
+                    '(':')',
+                    '{':'}',
+                }
+        if symbol_dict.has_key(symbol):
+            return symbol_dict[symbol]
+
+        symbol_dict = dict(zip(symbol_dict.values(), symbol_dict.keys()))
+
+        if symbol_dict.has_key(symbol):
+            return symbol_dict[symbol]
+        
+        return False
+
+
+    def __scrubURL(self):
+        '''
+        Cases:
+            + URL does not start with http, but has http somewhere (http://www.com)
+        '''
+        
+        if 'http://' in self.url:
+            position = self.url.find('http')
+            self.logger.debug('Found "http" in url at position: %d'%(position))
+            char_at_pos = self.url[position-1]
+            inv_char = self.__getInverseMarker( char_at_pos )
+            self.logger.debug('Found inverse symbol for %s : %s'%( char_at_pos, inv_char) )
+            if not inv_char:
+                self.url = self.url[position:]
+                return
+            # find the right most inverse
+            target_pos = self.url.rfind( inv_char )
+            self.url = self.url[position: target_pos]
+            return 
+
+        # fixes
+        if not self.url.startswith('http'):
+            self.url = 'http://'+ self.url
+
+    def __extractURLForward(self, html):
+        '''
+        Extract the target URL from html, is possible
+        '''
+        if 'http-equiv' in html:
+            # content="0;URL=http://twitter.com/gollmann/status/313393642922442752/photo/1"
+            self.logger.debug('Found http-equiv in url')
+            regex = """.*(url|URL)=(?P<url>[^"^>]+).*"""
+            match = re.match( regex, html )
+            if match:
+                self.final = match.groupdict()['url']
+                self.url = self.final
+                self.logger.debug('Found URL : %s'%(self.url))
+                return True
+            return False
+            
+
+    def __getFinalPage(self, newUrl=None):
+        self.depth += 1
+        if not newUrl:
+            url = self.url
+        else:
+            url = newUrl
+
+        self.logger.debug('Following %s'%(url))
+        up = urlparse(url)
+        if url.startswith('https'):
+            conn = httplib.HTTPSConnection(up.netloc)
+        else:
+            conn = httplib.HTTPConnection(up.netloc)
+        headers = ({'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22',
+                    'Accept-Language':'en-US,en;q=0.8',
+                    'Accept-Charset':'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+                                    })
+        conn.request("GET", up.path, headers=headers )
+        response = conn.getresponse()
+        if response.status in xrange(300,400):
+            # redirect
+            location = response.getheader('location')
+            self.logger.debug('Found a 3XX forward. Following it : %s'%(location) )
+            conn.close()
+            if not location == url:
+                self.__getFinalPage(location)
+        else:
+            self.final = url
+            content_type = response.getheader('content-type')
+            content_length = response.getheader('content-length')
+            if content_length and (int(content_length) in xrange(0,300)):
+                # this *might* be a url, lets get the data
+                self.logger.debug('Content length is < 300. This might be a JS redir. Checking out..')
+                data = response.read()
+                conn.close()
+                if self.__extractURLForward(data):
+                    self.logger.debug('It was a JS redir. Checking to make sure its not another redir')
+                    self.__getFinalPage()
+            self.logger.debug('Looks like that was the final URL')
+
+def main():
+    parser = argparse.ArgumentParser(description='URL Redirector')
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Verbose mode')
+    parser.add_argument('urls', nargs='*', default=None)
+    args = parser.parse_args()
+    if args.verbose:
+        print 'Found %s URLs to analyze'%(len(args.urls))
+    for url in args.urls:
+        print URLAnalyzer(url, verbose=args.verbose).final
+
+if __name__ == "__main__":
+    main()
