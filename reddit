@@ -3,6 +3,7 @@
 Created on Aug 28, 2010
 A reddit client
 
+LICENSE: Public Domain
 @author: kbandla
 '''
 import sys
@@ -17,13 +18,13 @@ try:
 except Exception,e:
     color = False
 
-URL = 'http://www.reddit.com/r/%s/.json'
-CLICK_URL = 'http://www.reddit.com/r/%s'
+URL = 'https://www.reddit.com/r/%s/.json'
+CLICK_URL = 'https://www.reddit.com/r/%s'
 SUBREDDITS = ['programming', 'linux','reverseengineering', 'netsec', 'malware']
 TIME_DIFF = 86400
 
 def getJSON(subreddit):
-    conn = httplib.HTTPConnection('www.reddit.com' , timeout=2)
+    conn = httplib.HTTPSConnection('www.reddit.com' , timeout=2)
     headers = ({'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22',
                 'Accept-Language':'en-US,en;q=0.8',
                 'Accept-Charset':'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
