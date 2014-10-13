@@ -145,6 +145,10 @@ class URLAnalyzer:
         if response.status in xrange(300,400):
             # redirect
             location = response.getheader('location')
+            if not location.startswith('http') or location.startswith('https'):
+                self.logger.debug('3XX location does not start with http(s). Aborting')
+                self.final = url
+                return
             self.logger.debug('Found a 3XX forward. Following it : %s'%(location) )
             conn.close()
             if not location == url:
