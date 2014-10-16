@@ -42,6 +42,8 @@ magic = [
   [0L, 'string', '=', '\037\213', 'application/x-gzip'],
   [0L, 'string', '=', 'BZh', 'application/x-bzip2'],
   [0L, 'string', '=', 'BZ', 'application/x-bzip'],
+  [0L, 'string', '=', '\x5d\x00\x00\x80', 'application/x-lzma'],
+  [0L, 'string', '=', '\x78\x9c\xec\xbd', 'application/x-zlib'],
 
   [0L, 'string', '=', '<!DOCTYPE HTML', 'text/html'],
   [0L, 'string', '=', '<!doctype html', 'text/html'],
