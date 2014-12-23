@@ -1,0 +1,100 @@
+#!/usr/bin/python
+'''
+Posts gists from commandline
+If the file is binary, a base64 encoded version is posted 
+
+Dependencies:
+* requests
+* python2.7 or later (argparse)
+
+By default, the gist is posted anonymously.
+
+To post gists from an account, you need generate a personal access token at:
+https://github.com/settings/applications
+
+Then, export the personal access token as an environment variable "GIST_TOKEN":
+> export GIST_TOKEN=blahblahblah
+or just add it to your .bashrc
+
+Run the program with -h for all options
+
+LICENSE: Public Domain
+@author: kbandla
+'''
+import os
+import pprint
+import requests
+import json
+import argparse
+from hashlib import md5
+
+GISTS_URL = "https://api.github.com/gists"
+AUTH_TOKEN = os.environ.get('GIST_TOKEN', None)
+
+def processData(data):
+    '''
+    data if json encodeable, else base64 
+    returns a tuple - (data, isBase64Encoded)
+    '''
+    try:
+        json.dumps(data)
+        return data, False
+    except Exception as e:
+        print 'File data might be binary. Base64 encoding it'
+        return data.encode('base64'), True
+
+def gist(filepath, description='', private=False):
+    filename = os.path.basename(filepath)
+    data = open(filepath).read()
+    md5sum = md5(data).hexdigest()
+    data, isBase64Encoded = processData(data)
+
+    headers = {}
+    if AUTH_TOKEN:
+        headers = {'Authorization' : 'token %s'%AUTH_TOKEN}
+    if isBase64Encoded:
+        description += ' base64'
+    description += ' ( %s )'%(md5sum)
+    payload = { 'description': description,
+                'public' : not private,
+                'files' : {
+                    filename: {'content' : data},
+                    }
+                }
+    try:
+        payload = json.dumps(payload)
+    except UnicodeDecodeError as e:
+        print 'Aborted : %s'%(e)
+        return
+
+    # Post data
+    r = requests.post(GISTS_URL, data=payload, headers=headers)
+    if r.status_code != 201:
+        print 'Error creating gist:'
+        pprint.pprint(r.json())
+    else:
+        response = r.json()
+        url = response.get('html_url',None)
+        print '%s : %s'%(filepath, url)
+
+def main():
+    parser = argparse.ArgumentParser(description='Gist command line')
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', 
+                        default=False, help='Verbose mode')
+    parser.add_argument('-p', '--private', dest='private', action='store_true', 
+                        default=False, help='Private')
+    parser.add_argument('-d', '--description', dest='description', action='store', 
+                        default='', help='Description')
+    parser.add_argument('files', nargs='*', default=None)
+    args = parser.parse_args()
+    if not args.files:
+        parser.print_help()
+        exit()
+    for filepath in args.files:
+        if os.path.exists(filepath):
+            gist(filepath, args.description, args.private)
+        else:
+            print 'File %s not found'%(filepath)
+
+if __name__ == "__main__":
+    main()
