@@ -18,6 +18,9 @@ or just add it to your .bashrc
 
 Run the program with -h for all options
 
+For github enterprise, use the following for GISTS_URL:
+    https://hostname/api/v3/gists
+
 LICENSE: Public Domain
 @author: kbandla
 '''
@@ -52,6 +55,8 @@ def gist(filepath, description='', private=False):
     headers = {}
     if AUTH_TOKEN:
         headers = {'Authorization' : 'token %s'%AUTH_TOKEN}
+    # needed for github enterprise 
+    headers['User-Agent'] = 'cmdgist'
     if isBase64Encoded:
         description += ' base64'
     description += ' ( %s )'%(md5sum)
@@ -70,8 +75,11 @@ def gist(filepath, description='', private=False):
     # Post data
     r = requests.post(GISTS_URL, data=payload, headers=headers)
     if r.status_code != 201:
-        print 'Error creating gist:'
-        pprint.pprint(r.json())
+        print '[%s] Error creating gist:'%(r.status_code)
+        try:
+            pprint.pprint(r.json())
+        except Exception as e:
+            print r.text
     else:
         response = r.json()
         url = response.get('html_url',None)
